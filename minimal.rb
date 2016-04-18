@@ -207,6 +207,12 @@ file 'app/views/application/_notifications.slim', <<-TXT
   - flash[name] = nil
 TXT
 
+run 'rm app/views/pages/home.html.erb'
+file 'app/views/pages/home.html.slim', <<-TXT
+h1 Pages#home
+p Find me in app/views/pages/home.html.slim
+TXT
+
 after_bundle do
   run "spring stop"
   generate(:controller, 'pages', 'home', '--no-helper', '--no-assets', '--skip-routes')
