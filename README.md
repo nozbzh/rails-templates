@@ -16,7 +16,7 @@ My fork adds SLIM instead of ERB and the following gems:
 * capybara
 * database_cleaner
 
-I also included a [javacript plugin](https://github.com/Verba/jquery-readyselector) that makes running javacript code on a specific page very easy.
+I also included the [jquery readyselector](https://github.com/Verba/jquery-readyselector) javacript plugin that makes running javacript code on a specific page very easy.
 It keeps all the javacript code in the assets folder and helps keeping views clean.
 
 ```bash

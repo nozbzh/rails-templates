@@ -160,7 +160,7 @@ html
     = stylesheet_link_tag    'application', media: 'all'
 
   body class="\#{controller_name} \#{action_name}"
-    = render 'application/header''
+    = render 'application/header'
     = render 'application/notifications'
     .col-md-8.col-md-offset-2
       = yield
