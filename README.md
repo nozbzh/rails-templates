@@ -8,6 +8,16 @@ using [Rails Templates](http://guides.rubyonrails.org/rails_application_template
 
 Get a minimal rails app ready to be deployed on Heroku with Bootstrap, Simple form and
 debugging gems.
+My fork adds SLIM instead of ERB and the following gems:
+* quiet-assets
+* rpsec
+* faker
+* factory-girl-rails
+* capybara
+* database_cleaner
+
+I also included a [javacript plugin](https://github.com/Verba/jquery-readyselector) that makes running javacript code on a specific page very easy.
+It keeps all the javacript code in the assets folder and helps keeping views clean.
 
 ```bash
 rails new \

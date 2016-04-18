@@ -8,8 +8,10 @@ gem 'puma'
 gem 'pg'
 gem 'figaro'
 gem 'jbuilder', '~> 2.0'
+gem 'devise'#{Rails.version >= "5" ? ", github: 'plataformatec/devise'" : nil}
 gem 'redis'
 
+gem 'slim'
 gem 'sass-rails'
 gem 'jquery-rails'
 gem 'uglifier'
@@ -27,6 +29,17 @@ group :development, :test do
   gem 'spring'
   #{Rails.version >= "5" ? "gem 'listen', '~> 3.0.5'" : nil}
   #{Rails.version >= "5" ? "gem 'spring-watcher-listen', '~> 2.0.0'" : nil}
+
+  gem 'quiet_assets'
+
+  %w[rspec-core rspec-expectations rspec-mocks rspec-rails rspec-support].each do |lib|
+    gem lib, :git => "https://github.com/rspec/\#{lib}.git", :branch => 'master'
+  end
+  gem 'rails-controller-testing'
+  gem 'faker'
+  gem 'factory_girl_rails'
+  gem 'capybara'
+  gem 'database_cleaner'
 end
 
 group :production do
@@ -67,7 +80,28 @@ file 'app/assets/javascripts/application.js', <<-JS
 //= require jquery
 //= require jquery_ujs
 //= require bootstrap-sprockets
+//= require jquery-readyselector
 //= require_tree .
+JS
+
+file 'vendor/assets/javascripts/jquery-readyselector.js', <<-JS
+(function ($) {
+  var ready = $.fn.ready;
+  $.fn.ready = function (fn) {
+    if (this.context === undefined) {
+      // The $().ready(fn) case.
+      ready(fn);
+    } else if (this.selector) {
+      ready($.proxy(function(){
+        $(this.selector, this.context).each(fn);
+      }, this));
+    } else {
+      ready($.proxy(function(){
+        $(this).each(fn);
+      }, this));
+    }
+  }
+})(jQuery);
 JS
 
 if Rails.version >= "5"
@@ -88,35 +122,95 @@ end
 
 gsub_file('config/environments/development.rb', /config\.assets\.debug.*/, 'config.assets.debug = false')
 
-run 'rm app/views/layouts/application.html.erb'
-file 'app/views/layouts/application.html.erb', <<-HTML
-<!DOCTYPE html>
-<html>
-  <head>
-    <title>TODO</title>
-    <%= csrf_meta_tags %>
-    #{Rails.version >= "5" ? "<%= action_cable_meta_tag %>" : nil}
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
-    <%= stylesheet_link_tag    'application', media: 'all' %>
-  </head>
-  <body>
-    <%= yield %>
-    <%= javascript_include_tag 'application' %>
-  </body>
-</html>
-HTML
+run 'rm app/assets/stylesheets/components/_alert.scss'
+file 'app/assets/stylesheets/components/_alert.scss', <<-TXT
+/* -------------------------------------
+ * Your CSS code for flash notices and alerts
+* ------------------------------------- */
 
-run "rm README.rdoc"
-markdown_file_content = <<-MARKDOWN
-Rails app generated with [lewagon/rails-templates](https://github.com/lewagon/rails-templates)
-MARKDOWN
-file 'README.md', markdown_file_content, force: true
+.alert {
+  margin: 0;
+  text-align: center;
+  color: white !important;
+}
+.alert-notice {
+  background: $blue;
+}
+.alert-alert {
+  background: $orange;
+}
+.alert-error {
+  background: $red;
+}
+.alert-success {
+  background: $green;
+}
+TXT
+
+run 'rm app/views/layouts/application.html.erb'
+file 'app/views/layouts/application.html.slim', <<-TXT
+doctype html
+html
+  head
+    title MyTitle
+    = csrf_meta_tags
+    = action_cable_meta_tag
+    meta name="viewport" content="width=device-width, initial-scale=1"
+    meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"
+    = stylesheet_link_tag    'application', media: 'all'
+
+  body class="\#{controller_name} \#{action_name}"
+    = render 'application/header''
+    = render 'application/notifications'
+    .col-md-8.col-md-offset-2
+      = yield
+      = render 'application/footer'
+      = javascript_include_tag 'application'
+TXT
+
+file 'app/views/application/_footer.slim', <<-TXT
+.col-md-8.col-md-offset-2
+  p.text-center I am the footer. Feed me!
+TXT
+
+file 'app/views/application/_header.slim', <<-TXT
+a href=root_path
+  h1.text-center style="margin-bottom: 2em" MySite!
+TXT
+
+file 'app/views/application/_notifications.slim', <<-TXT
+- if (message = flash[:notice]).present?
+  .container-fluid.alert.alert-notice style='padding: 20px;'
+    button.close aria-label="Close" data-dismiss="alert" type="button"
+      span aria-hidden="true" ×
+    center: span= message.html_safe
+
+- if (message = flash[:error]).present?
+  .container-fluid.alert.alert-error style='padding: 20px;'
+    button.close aria-label="Close" data-dismiss="alert" type="button"
+      span aria-hidden="true" ×
+    center: span= message.html_safe
+
+- if (message = flash[:alert]).present?
+  .container-fluid.alert.alert-alert style='padding: 20px;'
+    button.close aria-label="Close" data-dismiss="alert" type="button"
+      span aria-hidden="true" ×
+    center: span= message.html_safe
+
+- if (message = flash[:success]).present?
+  .container-fluid.alert.alert-success style='padding: 20px;'
+    button.close aria-label="Close" data-dismiss="alert" type="button"
+      span aria-hidden="true" ×
+    center: span= message.html_safe
+
+- [:notice, :error, :alert, :success].each do |name|
+  - flash[name] = nil
+TXT
 
 after_bundle do
+  run "spring stop"
   generate(:controller, 'pages', 'home', '--no-helper', '--no-assets', '--skip-routes')
   route "root to: 'pages#home'"
-
   run "rm .gitignore"
   file '.gitignore', <<-TXT
 .bundle
@@ -130,7 +224,8 @@ TXT
   run "bundle exec figaro install"
   generate('simple_form:install', '--bootstrap')
   rake 'db:drop db:create db:migrate'
+  run "bin/rails generate rspec:install"
   git :init
   git add: "."
-  git commit: %Q{ -m 'Initial commit with minmal template from https://github.com/lewagon/rails-templates' }
+  git commit: %Q{ -m 'Initial commit' }
 end
