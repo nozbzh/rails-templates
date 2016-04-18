@@ -160,25 +160,25 @@ html
     = stylesheet_link_tag    'application', media: 'all'
 
   body class="\#{controller_name} \#{action_name}"
-    = render 'application/header'
-    = render 'application/notifications'
+    = render 'shared/header'
+    = render 'shared/notifications'
     .col-md-8.col-md-offset-2
       = yield
-      = render 'application/footer'
+      = render 'shared/footer'
       = javascript_include_tag 'application'
 TXT
 
-file 'app/views/application/_footer.slim', <<-TXT
+file 'app/views/shared/_footer.slim', <<-TXT
 .col-md-8.col-md-offset-2
   p.text-center I am the footer. Feed me!
 TXT
 
-file 'app/views/application/_header.slim', <<-TXT
+file 'app/views/shared/_header.slim', <<-TXT
 a href=root_path
   h1.text-center style="margin-bottom: 2em" MySite!
 TXT
 
-file 'app/views/application/_notifications.slim', <<-TXT
+file 'app/views/shared/_notifications.slim', <<-TXT
 - if (message = flash[:notice]).present?
   .container-fluid.alert.alert-notice style='padding: 20px;'
     button.close aria-label="Close" data-dismiss="alert" type="button"
@@ -207,16 +207,15 @@ file 'app/views/application/_notifications.slim', <<-TXT
   - flash[name] = nil
 TXT
 
-run 'rm app/views/pages/home.html.erb'
-file 'app/views/pages/home.html.slim', <<-TXT
-h1 Pages#home
-p Find me in app/views/pages/home.html.slim
-TXT
-
 after_bundle do
   run "spring stop"
   generate(:controller, 'pages', 'home', '--no-helper', '--no-assets', '--skip-routes')
   route "root to: 'pages#home'"
+  run 'rm app/views/pages/home.html.erb'
+  file 'app/views/pages/home.html.slim', <<-TXT
+  h1 Pages#home
+  p Find me in app/views/pages/home.html.slim
+  TXT
   run "rm .gitignore"
   file '.gitignore', <<-TXT
 .bundle
