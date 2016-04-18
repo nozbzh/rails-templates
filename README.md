@@ -22,7 +22,7 @@ It keeps all the javacript code in the assets folder and helps keeping views cle
 ```bash
 rails new \
   -T --database postgresql \
-  -m https://raw.githubusercontent.com/lewagon/rails-templates/master/minimal.rb \
+  -m https://raw.githubusercontent.com/nozbzh/rails-templates/master/minimal.rb \
   CHANGE_THIS_TO_YOUR_RAILS_APP_NAME
 ```
 
@@ -34,6 +34,6 @@ Same as minimal **plus** a Devise install with a generated `User` model.
 ```bash
 rails new \
   -T --database postgresql \
-  -m https://raw.githubusercontent.com/lewagon/rails-templates/master/devise.rb \
+  -m https://raw.githubusercontent.com/nozbzh/rails-templates/master/devise.rb \
   CHANGE_THIS_TO_YOUR_RAILS_APP_NAME
 ```
