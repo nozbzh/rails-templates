@@ -180,7 +180,7 @@ TXT
 run "curl -L https://raw.githubusercontent.com/nozbzh/awesome-navbars/master/templates/_navbar_wagon.html.slim > app/views/shared/_navbar.html.slim"
 
 after_bundle do
-  run "spring stop"
+  rake 'db:drop db:create db:migrate'
   generate(:controller, 'pages', 'home', '--no-helper', '--no-assets', '--skip-routes')
   route "root to: 'pages#home'"
   run 'rm app/views/pages/home.html.erb'
@@ -202,12 +202,12 @@ TXT
   generate('simple_form:install', '--bootstrap')
   generate('devise:install')
   generate('devise', 'User')
+  rake 'db:migrate'
   generate('devise:views')
   run "gem install html2slim"
   run "for file in app/views/devise/**/*.erb; do erb2slim $file ${file%erb}slim && rm $file; done"
   environment 'config.action_mailer.default_url_options = { host: "http://localhost:3000" }', env: 'development'
   environment 'config.action_mailer.default_url_options = { host: "http://TODO_PUT_YOUR_DOMAIN_HERE" }', env: 'production'
-  rake 'db:drop db:create db:migrate'
   run "bin/rails generate rspec:install"
   git :init
   git add: "."
