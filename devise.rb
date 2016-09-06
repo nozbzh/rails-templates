@@ -1,7 +1,8 @@
+run "pgrep spring | xargs kill -9"
 run "rm Gemfile"
 file 'Gemfile', <<-RUBY
 source 'https://rubygems.org'
-ruby '2.3.0'
+ruby '#{RUBY_VERSION}'
 
 gem 'rails', '#{Rails.version}'
 gem 'puma'
@@ -17,7 +18,7 @@ gem 'jquery-rails'
 gem 'uglifier'
 gem 'bootstrap-sass'
 gem 'font-awesome-sass'
-gem 'simple_form'#{Rails.version >= "5" ? ", github: 'plataformatec/simple_form'" : nil}
+gem 'simple_form'
 gem 'autoprefixer-rails'
 
 group :development, :test do
@@ -30,8 +31,6 @@ group :development, :test do
   #{Rails.version >= "5" ? "gem 'listen', '~> 3.0.5'" : nil}
   #{Rails.version >= "5" ? "gem 'spring-watcher-listen', '~> 2.0.0'" : nil}
 
-  gem 'quiet_assets'
-
   %w[rspec-core rspec-expectations rspec-mocks rspec-rails rspec-support].each do |lib|
     gem lib, :git => "https://github.com/rspec/\#{lib}.git", :branch => 'master'
   end
@@ -42,34 +41,26 @@ group :development, :test do
   gem 'database_cleaner'
 end
 
-group :production do
-  gem 'rails_12factor'
-end
+#{Rails.version < "5" ? "gem 'rails_12factor', group: :production" : nil}
 RUBY
+
+file ".ruby-version", RUBY_VERSION
 
 file 'Procfile', <<-YAML
 web: bundle exec puma -C config/puma.rb
 YAML
 
+if Rails.version < "5"
 puma_file_content = <<-RUBY
-workers Integer(ENV['WEB_CONCURRENCY'] || 2)
-threads_count = Integer(ENV['MAX_THREADS'] || 5)
-threads threads_count, threads_count
+threads_count = ENV.fetch("RAILS_MAX_THREADS") { 5 }.to_i
 
-preload_app!
-
-rackup      DefaultRackup
-port        ENV['PORT']     || 3000
-environment ENV['RACK_ENV'] || 'development'
-
-on_worker_boot do
-  # Worker specific setup for Rails 4.1+
-  # See: https://devcenter.heroku.com/articles/deploying-rails-applications-with-the-puma-web-server#on-worker-boot
-  ActiveRecord::Base.establish_connection
-end
+threads     threads_count, threads_count
+port        ENV.fetch("PORT") { 3000 }
+environment ENV.fetch("RAILS_ENV") { "development" }
 RUBY
 
 file 'config/puma.rb', puma_file_content, force: true
+end
 
 run "rm -rf app/assets/stylesheets"
 run "curl -L https://github.com/lewagon/stylesheets/archive/master.zip > stylesheets.zip"
@@ -103,22 +94,6 @@ file 'vendor/assets/javascripts/jquery-readyselector.js', <<-JS
   }
 })(jQuery);
 JS
-
-if Rails.version >= "5"
-  run "rm app/assets/javascripts/cable.coffee"
-  file "app/assets/javascripts/cable.js", <<-JS
-// Action Cable provides the framework to deal with WebSockets in Rails.
-// You can generate new channels where WebSocket features live using the rails generate channel command.
-//
-// Turn on the cable connection by removing the comments after the require statements (and ensure it's also on in config/routes.rb).
-//
-//= require action_cable
-//= require_self
-//= require_tree ./channels
-// this.App || (this.App = {});
-// App.cable = ActionCable.createConsumer();
-  JS
-end
 
 gsub_file('config/environments/development.rb', /config\.assets\.debug.*/, 'config.assets.debug = false')
 
